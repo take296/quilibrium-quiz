@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>化学平衡 練習</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    background: #0a0a0f;
+    color: #e2e8f0;
+    font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+    max-width: 480px;
+    margin: 0 auto;
+    padding-bottom: 40px;
+  }
+  #header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 20px;
+    background: #111827;
+    border-bottom: 1px solid #1f2937;
+  }
+  #header-title { font-weight: 700; font-size: 16px; letter-spacing: 1px; color: #60a5fa; }
+  #header-stats { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .stat-badge {
+    background: #1e3a5f; color: #93c5fd; font-size: 12px;
+    padding: 3px 10px; border-radius: 20px; font-weight: 600;
+  }
+  .stat-badge.streak { background: #78350f; color: #fcd34d; }
+  .type-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 700; }
+  .type-圧力 { background: #1e3a5f; color: #93c5fd; }
+  .type-温度 { background: #450a0a; color: #fca5a5; }
+  .type-物質量 { background: #064e3b; color: #6ee7b7; }
+  #progress-bar { height: 4px; background: #1f2937; }
+  #progress-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #60a5fa); transition: width 0.4s; }
+  #card {
+    margin: 20px 16px 0;
+    background: #111827;
+    border-radius: 16px;
+    padding: 24px 20px;
+    border: 1px solid #1f2937;
+  }
+  #q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  #q-number { font-size: 12px; color: #6b7280; font-weight: 600; letter-spacing: 2px; }
+  #reaction { font-size: 17px; font-weight: 700; color: #f1f5f9; margin-bottom: 16px; line-height: 1.6; }
+  #condition-box {
+    display: flex; align-items: center; gap: 10px;
+    background: #1e3a5f; border-radius: 10px; padding: 10px 14px; margin-bottom: 16px;
+  }
+  #condition-label { font-size: 11px; color: #60a5fa; font-weight: 700; letter-spacing: 1px; white-space: nowrap; }
+  #condition { font-size: 15px; color: #bfdbfe; font-weight: 600; }
+  #q-text { font-size: 14px; color: #94a3b8; }
+  #choices { display: flex; gap: 10px; padding: 16px 16px 0; }
+  .choice-btn {
+    flex: 1; padding: 16px 4px; border-radius: 12px;
+    background: #1f2937; border: 2px solid #374151;
+    color: #e2e8f0; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: all 0.15s; letter-spacing: 1px;
+    font-family: inherit;
+  }
+  .choice-btn:active { transform: scale(0.97); }
+  .choice-btn.correct { background: #065f46; border-color: #10b981; color: #6ee7b7; }
+  .choice-btn.wrong { background: #7f1d1d; border-color: #ef4444; color: #fca5a5; }
+  .choice-btn.dimmed { opacity: 0.3; }
+  #result-box {
+    margin: 16px 16px 0;
+    border-radius: 16px; padding: 20px;
+    border: 1px solid #1f2937;
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  #result-emoji { font-size: 28px; margin-bottom: 4px; }
+  #result-text { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  #hint { font-size: 13px; color: #94a3b8; line-height: 1.7; margin-bottom: 16px; }
+  #next-btn {
+    width: 100%; padding: 14px; border-radius: 12px;
+    background: #3b82f6; border: none;
+    color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
+    font-family: inherit;
+  }
+  #finish-card {
+    margin: 40px 20px;
+    background: #111827; border-radius: 24px;
+    padding: 40px 24px; text-align: center;
+    border: 1px solid #1f2937;
+    display: none;
+  }
+  #finish-emoji { font-size: 56px; margin-bottom: 12px; }
+  #finish-title { font-size: 20px; font-weight: 700; color: #94a3b8; margin-bottom: 8px; }
+  #finish-score { font-size: 48px; font-weight: 900; color: #60a5fa; margin-bottom: 4px; }
+  #finish-pct { font-size: 24px; color: #94a3b8; margin-bottom: 8px; }
+  #finish-comment { font-size: 18px; font-weight: 700; color: #f1f5f9; margin-bottom: 16px; }
+  #type-breakdown { font-size: 13px; color: #6b7280; margin-bottom: 8px; line-height: 2; }
+  #streak-info { font-size: 13px; color: #6b7280; margin-bottom: 24px; }
+  #restart-btn {
+    padding: 14px 40px; border-radius: 12px;
+    background: #3b82f6; border: none;
+    color: #fff; font-size: 16px; font-weight: 700; cursor: pointer;
+    font-family: inherit;
+  }
+</style>
+</head>
+<body>
+
+<div id="main-content">
+  <div id="header">
+    <div id="header-title">化学平衡 練習</div>
+    <div id="header-stats">
+      <span class="stat-badge" id="score-badge">✅ 0</span>
+      <span class="stat-badge streak" id="streak-badge" style="display:none">🔥 0連続</span>
+      <span class="stat-badge" id="progress-badge">1/10</span>
+    </div>
+  </div>
+  <div id="progress-bar"><div id="progress-fill" style="width:0%"></div></div>
+  <div id="card">
+    <div id="q-header">
+      <div id="q-number">Q1</div>
+      <span id="type-label" class="type-badge"></span>
+    </div>
+    <div id="reaction"></div>
+    <div id="condition-box">
+      <span id="condition-label">操作</span>
+      <span id="condition"></span>
+    </div>
+    <div id="q-text">平衡はどちらに移動する？</div>
+  </div>
+  <div id="choices">
+    <button class="choice-btn" onclick="select('右')">右</button>
+    <button class="choice-btn" onclick="select('左')">左</button>
+    <button class="choice-btn" onclick="select('移動しない')">移動しない</button>
+  </div>
+  <div id="result-box">
+    <div id="result-emoji"></div>
+    <div id="result-text"></div>
+    <div id="hint"></div>
+    <button id="next-btn" onclick="next()">次の問題 →</button>
+  </div>
+</div>
+
+<div id="finish-card">
+  <div id="finish-emoji"></div>
+  <div id="finish-title">終了！</div>
+  <div id="finish-score"></div>
+  <div id="finish-pct"></div>
+  <div id="finish-comment"></div>
+  <div id="type-breakdown"></div>
+  <div id="streak-info"></div>
+  <button id="restart-btn" onclick="restart()">もう一回</button>
+</div>
+
+<script>
+const questions = [
+  // ===== 圧力系 =====
+  { reaction: "H₂ + I₂ ⇌ 2HI", condition: "圧力を加える", answer: "移動しない", hint: "左2個・右2個 → 分子数同じ", type: "圧力" },
+  { reaction: "2SO₂ + O₂ ⇌ 2SO₃", condition: "圧力を下げる", answer: "左", hint: "左3個・右2個 → 圧力↓は多い左へ", type: "圧力" },
+  { reaction: "PCl₅ ⇌ PCl₃ + Cl₂", condition: "圧力を加える", answer: "左", hint: "左1個・右2個 → 圧力↑は少ない左へ", type: "圧力" },
+  { reaction: "N₂ + 3H₂ ⇌ 2NH₃", condition: "圧力を加える", answer: "右", hint: "左4個・右2個 → 圧力↑は少ない右へ", type: "圧力" },
+  { reaction: "N₂ + O₂ ⇌ 2NO", condition: "圧力を下げる", answer: "移動しない", hint: "左2個・右2個 → 分子数同じ", type: "圧力" },
+  { reaction: "2NO₂ ⇌ N₂O₄", condition: "圧力を下げる", answer: "左", hint: "左2個・右1個 → 圧力↓は多い左へ", type: "圧力" },
+  { reaction: "C₂H₄ + H₂ ⇌ C₂H₆", condition: "圧力を加える", answer: "右", hint: "左2個・右1個 → 圧力↑は少ない右へ", type: "圧力" },
+  { reaction: "2SO₂ + O₂ ⇌ 2SO₃", condition: "圧力を加える", answer: "右", hint: "左3個・右2個 → 圧力↑は少ない右へ", type: "圧力" },
+  { reaction: "N₂ + 3H₂ ⇌ 2NH₃", condition: "圧力を下げる", answer: "左", hint: "左4個・右2個 → 圧力↓は多い左へ", type: "圧力" },
+  { reaction: "2NO₂ ⇌ N₂O₄", condition: "圧力を加える", answer: "右", hint: "左2個・右1個 → 圧力↑は少ない右へ", type: "圧力" },
+  { reaction: "PCl₅ ⇌ PCl₃ + Cl₂", condition: "圧力を下げる", answer: "右", hint: "左1個・右2個 → 圧力↓は多い右へ", type: "圧力" },
+  { reaction: "C₂H₄ + H₂ ⇌ C₂H₆", condition: "圧力を下げる", answer: "左", hint: "左2個・右1個 → 圧力↓は多い左へ", type: "圧力" },
+  { reaction: "H₂ + Cl₂ ⇌ 2HCl", condition: "圧力を加える", answer: "移動しない", hint: "左2個・右2個 → 分子数同じ", type: "圧力" },
+  { reaction: "H₂ + Cl₂ ⇌ 2HCl", condition: "圧力を下げる", answer: "移動しない", hint: "左2個・右2個 → 分子数同じ", type: "圧力" },
+  { reaction: "CO + 3H₂ ⇌ CH₄ + H₂O", condition: "圧力を加える", answer: "右", hint: "左4個・右2個 → 圧力↑は少ない右へ", type: "圧力" },
+  { reaction: "CO + 3H₂ ⇌ CH₄ + H₂O", condition: "圧力を下げる", answer: "左", hint: "左4個・右2個 → 圧力↓は多い左へ", type: "圧力" },
+  { reaction: "2H₂O ⇌ 2H₂ + O₂", condition: "圧力を加える", answer: "左", hint: "左2個・右3個 → 圧力↑は少ない左へ", type: "圧力" },
+  { reaction: "2H₂O ⇌ 2H₂ + O₂", condition: "圧力を下げる", answer: "右", hint: "左2個・右3個 → 圧力↓は多い右へ", type: "圧力" },
+  { reaction: "2CO + O₂ ⇌ 2CO₂", condition: "圧力を加える", answer: "右", hint: "左3個・右2個 → 圧力↑は少ない右へ", type: "圧力" },
+  { reaction: "2CO + O₂ ⇌ 2CO₂", condition: "圧力を下げる", answer: "左", hint: "左3個・右2個 → 圧力↓は多い左へ", type: "圧力" },
+  { reaction: "N₂O₄ ⇌ 2NO₂", condition: "圧力を加える", answer: "左", hint: "左1個・右2個 → 圧力↑は少ない左へ", type: "圧力" },
+  { reaction: "N₂O₄ ⇌ 2NO₂", condition: "圧力を下げる", answer: "右", hint: "左1個・右2個 → 圧力↓は多い右へ", type: "圧力" },
+  { reaction: "2NH₃ ⇌ N₂ + 3H₂", condition: "圧力を加える", answer: "左", hint: "左2個・右4個 → 圧力↑は少ない左へ", type: "圧力" },
+  { reaction: "2NH₃ ⇌ N₂ + 3H₂", condition: "圧力を下げる", answer: "右", hint: "左2個・右4個 → 圧力↓は多い右へ", type: "圧力" },
+  { reaction: "CO₂ + H₂ ⇌ CO + H₂O", condition: "圧力を加える", answer: "移動しない", hint: "左2個・右2個 → 分子数同じ", type: "圧力" },
+  { reaction: "CO₂ + H₂ ⇌ CO + H₂O", condition: "圧力を下げる", answer: "移動しない", hint: "左2個・右2個 → 分子数同じ", type: "圧力" },
+  { reaction: "SO₃ ⇌ SO₂ + ½O₂", condition: "圧力を加える", answer: "左", hint: "左1個・右1.5個 → 圧力↑は少ない左へ", type: "圧力" },
+  { reaction: "CH₄ + H₂O ⇌ CO + 3H₂", condition: "圧力を加える", answer: "左", hint: "左2個・右4個 → 圧力↑は少ない左へ", type: "圧力" },
+  { reaction: "CH₄ + H₂O ⇌ CO + 3H₂", condition: "圧力を下げる", answer: "右", hint: "左2個・右4個 → 圧力↓は多い右へ", type: "圧力" },
+  { reaction: "2HI ⇌ H₂ + I₂", condition: "圧力を加える", answer: "移動しない", hint: "左2個・右2個 → 分子数同じ", type: "圧力" },
+  { reaction: "4NH₃ + 5O₂ ⇌ 4NO + 6H₂O", condition: "圧力を加える", answer: "右", hint: "左9個・右10個 → 圧力↑は少ない左…いや右は10個か？左9個が少ない→左へ", type: "圧力" },
+  { reaction: "4NH₃ + 3O₂ ⇌ 2N₂ + 6H₂O", condition: "圧力を加える", answer: "右", hint: "左7個・右8個 → 圧力↑は少ない左へ", type: "圧力" },
+  { reaction: "2NO + O₂ ⇌ 2NO₂", condition: "圧力を加える", answer: "右", hint: "左3個・右2個 → 圧力↑は少ない右へ", type: "圧力" },
+  { reaction: "2NO + O₂ ⇌ 2NO₂", condition: "圧力を下げる", answer: "左", hint: "左3個・右2個 → 圧力↓は多い左へ", type: "圧力" },
+  { reaction: "Fe₃O₄ + 4H₂ ⇌ 3Fe + 4H₂O", condition: "圧力を加える", answer: "移動しない", hint: "左4個・右4個（固体除く） → 分子数同じ", type: "圧力" },
+
+  // ===== 温度系 =====
+  { reaction: "2H₂ + O₂ ⇌ 2H₂O　ΔH=-Q kJ", condition: "温度を上げる", answer: "左", hint: "ΔH<0 → 右が発熱 → 温度↑は吸熱（左）へ", type: "温度" },
+  { reaction: "2H₂ + O₂ ⇌ 2H₂O　ΔH=-Q kJ", condition: "温度を下げる", answer: "右", hint: "ΔH<0 → 右が発熱 → 温度↓は発熱（右）へ", type: "温度" },
+  { reaction: "N₂ + O₂ ⇌ 2NO　ΔH=+Q kJ", condition: "温度を上げる", answer: "右", hint: "ΔH>0 → 右が吸熱 → 温度↑は吸熱（右）へ", type: "温度" },
+  { reaction: "N₂ + O₂ ⇌ 2NO　ΔH=+Q kJ", condition: "温度を下げる", answer: "左", hint: "ΔH>0 → 右が吸熱 → 温度↓は発熱（左）へ", type: "温度" },
+  { reaction: "N₂ + 3H₂ ⇌ 2NH₃　ΔH=-Q kJ", condition: "温度を上げる", answer: "左", hint: "ΔH<0 → 右が発熱 → 温度↑は吸熱（左）へ", type: "温度" },
+  { reaction: "N₂ + 3H₂ ⇌ 2NH₃　ΔH=-Q kJ", condition: "温度を下げる", answer: "右", hint: "ΔH<0 → 右が発熱 → 温度↓は発熱（右）へ", type: "温度" },
+  { reaction: "C₂H₄ + H₂ ⇌ C₂H₆　ΔH=-Q kJ", condition: "温度を下げる", answer: "右", hint: "ΔH<0 → 右が発熱 → 温度↓は発熱（右）へ", type: "温度" },
+  { reaction: "C₂H₄ + H₂ ⇌ C₂H₆　ΔH=-Q kJ", condition: "温度を上げる", answer: "左", hint: "ΔH<0 → 右が発熱 → 温度↑は吸熱（左）へ", type: "温度" },
+  { reaction: "2NO₂ ⇌ N₂O₄　ΔH=-Q kJ", condition: "温度を下げる", answer: "右", hint: "ΔH<0 → 右が発熱 → 温度↓は発熱（右）へ", type: "温度" },
+  { reaction: "2NO₂ ⇌ N₂O₄　ΔH=-Q kJ", condition: "温度を上げる", answer: "左", hint: "ΔH<0 → 右が発熱 → 温度↑は吸熱（左）へ", type: "温度" },
+  { reaction: "2SO₂ + O₂ ⇌ 2SO₃　ΔH=-Q kJ", condition: "温度を上げる", answer: "左", hint: "ΔH<0 → 右が発熱 → 温度↑は吸熱（左）へ", type: "温度" },
+  { reaction: "2SO₂ + O₂ ⇌ 2SO₃　ΔH=-Q kJ", condition: "温度を下げる", answer: "右", hint: "ΔH<0 → 右が発熱 → 温度↓は発熱（右）へ", type: "温度" },
+  { reaction: "CO₂ + C ⇌ 2CO　ΔH=+Q kJ", condition: "温度を上げる", answer: "右", hint: "ΔH>0 → 右が吸熱 → 温度↑は吸熱（右）へ", type: "温度" },
+  { reaction: "CO₂ + C ⇌ 2CO　ΔH=+Q kJ", condition: "温度を下げる", answer: "左", hint: "ΔH>0 → 右が吸熱 → 温度↓は発熱（左）へ", type: "温度" },
+  { reaction: "H₂ + I₂ ⇌ 2HI　ΔH=-Q kJ", condition: "温度を上げる", answer: "左", hint: "ΔH<0 → 右が発熱 → 温度↑は吸熱（左）へ", type: "温度" },
+  { reaction: "H₂ + I₂ ⇌ 2HI　ΔH=-Q kJ", condition: "温度を下げる", answer: "右", hint: "ΔH<0 → 右が発熱 → 温度↓は発熱（右）へ", type: "温度" },
+  { reaction: "PCl₅ ⇌ PCl₃ + Cl₂　ΔH=+Q kJ", condition: "温度を上げる", answer: "右", hint: "ΔH>0 → 右が吸熱 → 温度↑は吸熱（右）へ", type: "温度" },
+  { reaction: "PCl₅ ⇌ PCl₃ + Cl₂　ΔH=+Q kJ", condition: "温度を下げる", answer: "左", hint: "ΔH>0 → 右が吸熱 → 温度↓は発熱（左）へ", type: "温度" },
+  { reaction: "2CO + O₂ ⇌ 2CO₂　ΔH=-Q kJ", condition: "温度を上げる", answer: "左", hint: "ΔH<0 → 右が発熱 → 温度↑は吸熱（左）へ", type: "温度" },
+  { reaction: "2CO + O₂ ⇌ 2CO₂　ΔH=-Q kJ", condition: "温度を下げる", answer: "右", hint: "ΔH<0 → 右が発熱 → 温度↓は発熱（右）へ", type: "温度" },
+  { reaction: "N₂O₄ ⇌ 2NO₂　ΔH=+Q kJ", condition: "温度を上げる", answer: "右", hint: "ΔH>0 → 右が吸熱 → 温度↑は吸熱（右）へ", type: "温度" },
+  { reaction: "N₂O₄ ⇌ 2NO₂　ΔH=+Q kJ", condition: "温度を下げる", answer: "左", hint: "ΔH>0 → 右が吸熱 → 温度↓は発熱（左）へ", type: "温度" },
+  { reaction: "CH₄ + H₂O ⇌ CO + 3H₂　ΔH=+Q kJ", condition: "温度を上げる", answer: "右", hint: "ΔH>0 → 右が吸熱 → 温度↑は吸熱（右）へ", type: "温度" },
+  { reaction: "CH₄ + H₂O ⇌ CO + 3H₂　ΔH=+Q kJ", condition: "温度を下げる", answer: "左", hint: "ΔH>0 → 右が吸熱 → 温度↓は発熱（左）へ", type: "温度" },
+  { reaction: "Fe₂O₃ + 3CO ⇌ 2Fe + 3CO₂　ΔH=-Q kJ", condition: "温度を上げる", answer: "左", hint: "ΔH<0 → 右が発熱 → 温度↑は吸熱（左）へ", type: "温度" },
+  { reaction: "Fe₂O₃ + 3CO ⇌ 2Fe + 3CO₂　ΔH=-Q kJ", condition: "温度を下げる", answer: "右", hint: "ΔH<0 → 右が発熱 → 温度↓は発熱（右）へ", type: "温度" },
+  { reaction: "CaCO₃ ⇌ CaO + CO₂　ΔH=+Q kJ", condition: "温度を上げる", answer: "右", hint: "ΔH>0 → 右が吸熱 → 温度↑は吸熱（右）へ", type: "温度" },
+  { reaction: "CaCO₃ ⇌ CaO + CO₂　ΔH=+Q kJ", condition: "温度を下げる", answer: "左", hint: "ΔH>0 → 右が吸熱 → 温度↓は発熱（左）へ", type: "温度" },
+  { reaction: "2NO + O₂ ⇌ 2NO₂　ΔH=-Q kJ", condition: "温度を上げる", answer: "左", hint: "ΔH<0 → 右が発熱 → 温度↑は吸熱（左）へ", type: "温度" },
+  { reaction: "2NO + O₂ ⇌ 2NO₂　ΔH=-Q kJ", condition: "温度を下げる", answer: "右", hint: "ΔH<0 → 右が発熱 → 温度↓は発熱（右）へ", type: "温度" },
+  { reaction: "CO₂ + H₂ ⇌ CO + H₂O　ΔH=+Q kJ", condition: "温度を上げる", answer: "右", hint: "ΔH>0 → 右が吸熱 → 温度↑は吸熱（右）へ", type: "温度" },
+  { reaction: "CO₂ + H₂ ⇌ CO + H₂O　ΔH=+Q kJ", condition: "温度を下げる", answer: "左", hint: "ΔH>0 → 右が吸熱 → 温度↓は発熱（左）へ", type: "温度" },
+  { reaction: "2HCl ⇌ H₂ + Cl₂　ΔH=+Q kJ", condition: "温度を上げる", answer: "右", hint: "ΔH>0 → 右が吸熱 → 温度↑は吸熱（右）へ", type: "温度" },
+  { reaction: "2HCl ⇌ H₂ + Cl₂　ΔH=+Q kJ", condition: "温度を下げる", answer: "左", hint: "ΔH>0 → 右が吸熱 → 温度↓は発熱（左）へ", type: "温度" },
+  { reaction: "2NH₃ ⇌ N₂ + 3H₂　ΔH=+Q kJ", condition: "温度を上げる", answer: "右", hint: "ΔH>0 → 右が吸熱 → 温度↑は吸熱（右）へ", type: "温度" },
+  { reaction: "2NH₃ ⇌ N₂ + 3H₂　ΔH=+Q kJ", condition: "温度を下げる", answer: "左", hint: "ΔH>0 → 右が吸熱 → 温度↓は発熱（左）へ", type: "温度" },
+
+  // ===== 物質量系 =====
+  { reaction: "2NO₂ ⇌ N₂O₄", condition: "NO₂を追加する", answer: "右", hint: "NO₂が増えた → 減らそうとする → 右へ", type: "物質量" },
+  { reaction: "2SO₂ + O₂ ⇌ 2SO₃", condition: "SO₃を一部取り除く", answer: "右", hint: "SO₃が減った → 増やそうとする → 右へ", type: "物質量" },
+  { reaction: "N₂ + 3H₂ ⇌ 2NH₃", condition: "N₂を追加する", answer: "右", hint: "N₂が増えた → 減らそうとする → 右へ", type: "物質量" },
+  { reaction: "N₂ + O₂ ⇌ 2NO", condition: "NOを一部取り除く", answer: "右", hint: "NOが減った → 増やそうとする → 右へ", type: "物質量" },
+  { reaction: "PCl₅ ⇌ PCl₃ + Cl₂", condition: "Cl₂を追加する", answer: "左", hint: "Cl₂が増えた → 減らそうとする → 左へ", type: "物質量" },
+  { reaction: "2NO₂ ⇌ N₂O₄", condition: "N₂O₄を追加する", answer: "左", hint: "N₂O₄が増えた → 減らそうとする → 左へ", type: "物質量" },
+  { reaction: "H₂ + I₂ ⇌ 2HI", condition: "HIを一部取り除く", answer: "右", hint: "HIが減った → 増やそうとする → 右へ", type: "物質量" },
+  { reaction: "H₂ + I₂ ⇌ 2HI", condition: "I₂を追加する", answer: "右", hint: "I₂が増えた → 減らそうとする → 右へ", type: "物質量" },
+  { reaction: "N₂ + 3H₂ ⇌ 2NH₃", condition: "NH₃を一部取り除く", answer: "右", hint: "NH₃が減った → 増やそうとする → 右へ", type: "物質量" },
+  { reaction: "N₂ + 3H₂ ⇌ 2NH₃", condition: "H₂を一部取り除く", answer: "左", hint: "H₂が減った → 増やそうとする → 左へ", type: "物質量" },
+  { reaction: "2SO₂ + O₂ ⇌ 2SO₃", condition: "O₂を追加する", answer: "右", hint: "O₂が増えた → 減らそうとする → 右へ", type: "物質量" },
+  { reaction: "2SO₂ + O₂ ⇌ 2SO₃", condition: "SO₂を一部取り除く", answer: "左", hint: "SO₂が減った → 増やそうとする → 左へ", type: "物質量" },
+  { reaction: "PCl₅ ⇌ PCl₃ + Cl₂", condition: "PCl₅を追加する", answer: "右", hint: "PCl₅が増えた → 減らそうとする → 右へ", type: "物質量" },
+  { reaction: "PCl₅ ⇌ PCl₃ + Cl₂", condition: "PCl₃を一部取り除く", answer: "右", hint: "PCl₃が減った → 増やそうとする → 右へ", type: "物質量" },
+  { reaction: "CO₂ + H₂ ⇌ CO + H₂O", condition: "COを追加する", answer: "左", hint: "COが増えた → 減らそうとする → 左へ", type: "物質量" },
+  { reaction: "CO₂ + H₂ ⇌ CO + H₂O", condition: "CO₂を一部取り除く", answer: "左", hint: "CO₂が減った → 増やそうとする → 左へ", type: "物質量" },
+  { reaction: "N₂O₄ ⇌ 2NO₂", condition: "N₂O₄を追加する", answer: "右", hint: "N₂O₄が増えた → 減らそうとする → 右へ", type: "物質量" },
+  { reaction: "N₂O₄ ⇌ 2NO₂", condition: "NO₂を一部取り除く", answer: "右", hint: "NO₂が減った → 増やそうとする → 右へ", type: "物質量" },
+  { reaction: "2NO + O₂ ⇌ 2NO₂", condition: "NOを追加する", answer: "右", hint: "NOが増えた → 減らそうとする → 右へ", type: "物質量" },
+  { reaction: "2NO + O₂ ⇌ 2NO₂", condition: "NO₂を一部取り除く", answer: "右", hint: "NO₂が減った → 増やそうとする → 右へ", type: "物質量" },
+  { reaction: "2NO + O₂ ⇌ 2NO₂", condition: "O₂を一部取り除く", answer: "左", hint: "O₂が減った → 増やそうとする → 左へ", type: "物質量" },
+  { reaction: "CH₄ + H₂O ⇌ CO + 3H₂", condition: "H₂を追加する", answer: "左", hint: "H₂が増えた → 減らそうとする → 左へ", type: "物質量" },
+  { reaction: "CH₄ + H₂O ⇌ CO + 3H₂", condition: "COを一部取り除く", answer: "右", hint: "COが減った → 増やそうとする → 右へ", type: "物質量" },
+  { reaction: "2H₂ + O₂ ⇌ 2H₂O", condition: "H₂Oを一部取り除く", answer: "右", hint: "H₂Oが減った → 増やそうとする → 右へ", type: "物質量" },
+  { reaction: "2H₂ + O₂ ⇌ 2H₂O", condition: "O₂を追加する", answer: "右", hint: "O₂が増えた → 減らそうとする → 右へ", type: "物質量" },
+  { reaction: "H₂ + Cl₂ ⇌ 2HCl", condition: "HClを一部取り除く", answer: "右", hint: "HClが減った → 増やそうとする → 右へ", type: "物質量" },
+  { reaction: "H₂ + Cl₂ ⇌ 2HCl", condition: "H₂を追加する", answer: "右", hint: "H₂が増えた → 減らそうとする → 右へ", type: "物質量" },
+  { reaction: "N₂ + O₂ ⇌ 2NO", condition: "N₂を追加する", answer: "右", hint: "N₂が増えた → 減らそうとする → 右へ", type: "物質量" },
+  { reaction: "N₂ + O₂ ⇌ 2NO", condition: "O₂を一部取り除く", answer: "左", hint: "O₂が減った → 増やそうとする → 左へ", type: "物質量" },
+  { reaction: "2NH₃ ⇌ N₂ + 3H₂", condition: "NH₃を追加する", answer: "右", hint: "NH₃が増えた → 減らそうとする → 右へ", type: "物質量" },
+  { reaction: "2NH₃ ⇌ N₂ + 3H₂", condition: "N₂を一部取り除く", answer: "右", hint: "N₂が減った → 増やそうとする → 右へ", type: "物質量" },
+];
+
+const QUIZ_SIZE = 10;
+let quizList = [];
+let current = 0;
+let score = 0;
+let streak = 0;
+let maxStreak = 0;
+let answered = false;
+let typeScore = { 圧力: [0,0], 温度: [0,0], 物質量: [0,0] };
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function init() {
+  // 3種類からバランスよく10問選ぶ（3-3-4）
+  const byType = { 圧力: [], 温度: [], 物質量: [] };
+  questions.forEach(q => byType[q.type].push(q));
+  const s圧力 = shuffle(byType['圧力']).slice(0, 3);
+  const s温度 = shuffle(byType['温度']).slice(0, 3);
+  const s物質量 = shuffle(byType['物質量']).slice(0, 4);
+  quizList = shuffle([...s圧力, ...s温度, ...s物質量]);
+
+  current = 0; score = 0; streak = 0; maxStreak = 0; answered = false;
+  typeScore = { 圧力: [0,0], 温度: [0,0], 物質量: [0,0] };
+  document.getElementById('finish-card').style.display = 'none';
+  document.getElementById('main-content').style.display = 'block';
+  loadQuestion();
+}
+
+function loadQuestion() {
+  const q = quizList[current];
+  answered = false;
+  document.getElementById('q-number').textContent = `Q${current + 1}`;
+  document.getElementById('reaction').textContent = q.reaction;
+  document.getElementById('condition').textContent = q.condition;
+  document.getElementById('result-box').style.display = 'none';
+  document.getElementById('progress-fill').style.width = `${(current / QUIZ_SIZE) * 100}%`;
+  document.getElementById('progress-badge').textContent = `${current + 1}/${QUIZ_SIZE}`;
+  document.getElementById('score-badge').textContent = `✅ ${score}`;
+
+  const tl = document.getElementById('type-label');
+  tl.textContent = q.type;
+  tl.className = `type-badge type-${q.type}`;
+
+  document.querySelectorAll('.choice-btn').forEach(b => {
+    b.className = 'choice-btn';
+    b.disabled = false;
+  });
+}
+
+function select(choice) {
+  if (answered) return;
+  answered = true;
+  const q = quizList[current];
+  const correct = choice === q.answer;
+
+  typeScore[q.type][1]++;
+  if (correct) { score++; streak++; maxStreak = Math.max(maxStreak, streak); typeScore[q.type][0]++; }
+  else { streak = 0; }
+
+  document.querySelectorAll('.choice-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === q.answer) b.classList.add('correct');
+    else if (b.textContent === choice) b.classList.add('wrong');
+    else b.classList.add('dimmed');
+  });
+
+  const sb = document.getElementById('streak-badge');
+  if (streak >= 2) { sb.style.display = 'inline'; sb.textContent = `🔥 ${streak}連続`; }
+  else { sb.style.display = 'none'; }
+
+  const rb = document.getElementById('result-box');
+  rb.style.display = 'block';
+  rb.style.background = correct ? '#064e3b' : '#450a0a';
+  document.getElementById('result-emoji').textContent = correct ? '⭕' : '❌';
+  document.getElementById('result-text').textContent = correct ? '正解！' : `不正解　正解: ${q.answer}`;
+  document.getElementById('hint').textContent = q.hint;
+  document.getElementById('next-btn').textContent = current + 1 >= QUIZ_SIZE ? '結果を見る' : '次の問題 →';
+  document.getElementById('score-badge').textContent = `✅ ${score}`;
+}
+
+function next() {
+  current++;
+  if (current >= QUIZ_SIZE) showFinish();
+  else loadQuestion();
+}
+
+function showFinish() {
+  document.getElementById('main-content').style.display = 'none';
+  const fc = document.getElementById('finish-card');
+  fc.style.display = 'block';
+  const pct = Math.round((score / QUIZ_SIZE) * 100);
+  document.getElementById('finish-emoji').textContent = pct >= 80 ? '🏆' : pct >= 50 ? '📈' : '💪';
+  document.getElementById('finish-score').textContent = `${score} / ${QUIZ_SIZE}`;
+  document.getElementById('finish-pct').textContent = `${pct}%`;
+  document.getElementById('finish-comment').textContent = pct >= 90 ? '完璧じゃん' : pct >= 70 ? 'いい感じ' : pct >= 50 ? 'もう少し' : '要復習';
+
+  let bd = '';
+  for (const [type, [ok, total]] of Object.entries(typeScore)) {
+    if (total > 0) bd += `${type}: ${ok}/${total}　`;
+  }
+  document.getElementById('type-breakdown').textContent = bd;
+  document.getElementById('streak-info').textContent = `最大連続正解: ${maxStreak}問`;
+}
+
+function restart() { init(); }
+init();
+</script>
+</body>
+</html>
